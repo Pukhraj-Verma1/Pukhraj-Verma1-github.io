@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ScrapUncle — Turning Kabaad into Value</title>
+<meta name="description" content="ScrapSetu connects households with verified kabaadi walas. Transparent prices, doorstep pickup, instant UPI payment." />
+
+<!-- ══ Fonts ══ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- ══ Tailwind v4 (browser runtime — swap for CLI build in production) ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+<!-- ══ GSAP 3.13 (all plugins free) ══ -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MotionPathPlugin.min.js"></script>
+
+<!-- ══ Lenis smooth scroll ══ -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script> -->
+
+<!-- ══ Three.js ══ -->
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
+</script>
+
+<style type="text/tailwindcss">
+  @theme {
+    --color-ink:        #0B1F1A;
+    --color-ink-soft:   #12302A;
+    --color-cream:      #F7F5F0;
+    --color-kgreen:     #16A34A;
+    --color-kgreen-lt:  #34D399;
+    --color-gold:       #F5B32E;
+    --color-gold-dk:    #B57C0A;
+    --color-terra:      #E2703A;
+    --color-terra-dk:   #B4471A;
+    --color-violet:     #8B5CF6;
+    --color-teal:       #2DD4BF;
+    --font-display: "Sora", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+  }
+</style>
+
+<style>
+  :root{
+    --ink:#0B1F1A; --cream:#F7F5F0; --kgreen:#16A34A; --gold:#F5B32E; --terra:#E2703A;
+    --ease-out: cubic-bezier(.16,1,.3,1);
+  }
+  *{ -webkit-font-smoothing:antialiased; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:"Inter",system-ui,sans-serif;
+    background:var(--cream); color:var(--ink);
+    overflow-x:clip;
+  }
+  body.lang-hi .hi-font{ font-family:"Noto Sans Devanagari","Inter",sans-serif; }
+  h1,h2,h3,.display{ font-family:"Sora",sans-serif; letter-spacing:-.02em; }
+  .num{ font-variant-numeric: tabular-nums; }
+
+  /* ── Slide shell ── */
+  .slide{ position:relative; min-height:100svh; width:100%; display:flex; align-items:center;
+          padding:6rem 1.25rem; overflow:hidden; }
+  @media(min-width:768px){ .slide{ padding:6rem 3rem; } }
+  .slide-inner{ width:100%; max-width:1280px; margin:0 auto; position:relative; z-index:2; }
+
+  /* ── Text reveal machinery ── */
+  .line-mask{ display:block; overflow:hidden; padding-bottom:.08em; }
+  .char{ display:inline-block; will-change:transform; }
+
+  /* ── Chrome ── */
+  #progress{ position:fixed; top:0; left:0; height:3px; width:100%; z-index:90; transform-origin:0 50%;
+             transform:scaleX(0); background:linear-gradient(90deg,var(--kgreen),var(--gold),var(--terra)); }
+  .chrome{ transition:opacity .4s var(--ease-out), transform .4s var(--ease-out); }
+  body.presenting .chrome{ opacity:0; pointer-events:none; transform:translateY(-8px); }
+  body.presenting #exitPresent{ opacity:1; pointer-events:auto; }
+
+  .dot{ width:9px; height:9px; border-radius:99px; background:currentColor; opacity:.28;
+        transition:all .45s var(--ease-out); }
+  .dot-btn.active .dot{ opacity:1; height:26px; background:var(--kgreen); }
+  .dot-label{ opacity:0; transform:translateX(8px); transition:all .3s var(--ease-out);
+              pointer-events:none; white-space:nowrap; }
+  .dot-btn:hover .dot-label{ opacity:1; transform:translateX(0); }
+
+  /* ── Cards / surfaces ── */
+  .card{ background:#fff; border:1px solid rgba(11,31,26,.08); border-radius:22px;
+         box-shadow:0 1px 2px rgba(11,31,26,.04), 0 18px 40px -24px rgba(11,31,26,.25); }
+  .card-dark{ background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.11);
+              border-radius:22px; backdrop-filter:blur(10px); }
+  .pill{ border-radius:999px; border:1px solid rgba(11,31,26,.14); padding:.5rem 1rem;
+         font-size:.78rem; font-weight:500; }
+  .tag{ display:inline-flex; align-items:center; gap:.5rem; font-size:.7rem; font-weight:600;
+        letter-spacing:.16em; text-transform:uppercase; }
+
+  /* ── Phone mockup ── */
+  .phone{ width:250px; border-radius:34px; background:#0B1F1A; padding:9px;
+          box-shadow:0 40px 80px -30px rgba(11,31,26,.6), inset 0 0 0 1px rgba(255,255,255,.12); }
+  .phone-screen{ border-radius:26px; background:#fff; overflow:hidden; height:470px; position:relative; }
+  .notch{ position:absolute; top:8px; left:50%; transform:translateX(-50%); width:64px; height:5px;
+          border-radius:99px; background:rgba(11,31,26,.25); z-index:5; }
+
+  /* ── Flip cards ── */
+  .flip{ perspective:1400px; }
+  .flip-in{ position:relative; transform-style:preserve-3d; transition:transform .75s var(--ease-out); height:100%; }
+  .flip:hover .flip-in, .flip:focus-within .flip-in{ transform:rotateY(180deg); }
+  .flip-face{ backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+  .flip-back{ position:absolute; inset:0; transform:rotateY(180deg); }
+
+  /* ── Hex trust grid ── */
+  .hex{ transition:transform .4s var(--ease-out), box-shadow .4s var(--ease-out); }
+  .hex:hover{ transform:translateY(-8px) rotateX(6deg) rotateY(-6deg); box-shadow:0 30px 50px -28px rgba(11,31,26,.5); }
+
+  /* ── Range sliders ── */
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px;
+                     background:rgba(11,31,26,.12); outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:26px; height:26px; border-radius:99px;
+    background:#fff; border:5px solid var(--kgreen); cursor:grab; box-shadow:0 4px 14px rgba(22,163,74,.4);
+    transition:transform .2s var(--ease-out); }
+  input[type=range]::-webkit-slider-thumb:active{ transform:scale(1.15); cursor:grabbing; }
+  input[type=range]::-moz-range-thumb{ width:18px; height:18px; border-radius:99px; background:#fff;
+    border:5px solid var(--kgreen); cursor:grab; }
+  input.terra[type=range]::-webkit-slider-thumb{ border-color:var(--terra); box-shadow:0 4px 14px rgba(226,112,58,.4); }
+  input.terra[type=range]::-moz-range-thumb{ border-color:var(--terra); }
+
+  /* ── Material chips ── */
+  .chip{ border:1.5px solid rgba(11,31,26,.14); border-radius:999px; padding:.55rem 1rem; font-size:.85rem;
+         font-weight:500; cursor:pointer; transition:all .28s var(--ease-out); background:#fff; }
+  .chip:hover{ border-color:var(--kgreen); transform:translateY(-2px); }
+  .chip.on{ background:var(--kgreen); border-color:var(--kgreen); color:#fff;
+            box-shadow:0 10px 22px -10px rgba(22,163,74,.8); }
+
+  /* ── Workflow nodes ── */
+  .wf-node{ cursor:pointer; }
+  .wf-node circle.ring{ transition:all .4s var(--ease-out); }
+  .wf-node.active circle.ring{ stroke-width:3; r:26; }
+  .dash{ stroke-dasharray:8 10; }
+
+  /* ── Kalakriti gradient skin ── */
+  .aura{ background:linear-gradient(120deg,#8B5CF6,#2DD4BF); }
+  .aura-text{ background:linear-gradient(100deg,#C4B5FD,#5EEAD4); -webkit-background-clip:text;
+              background-clip:text; color:transparent; }
+  .scanline{ position:absolute; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,#2DD4BF,transparent);
+             box-shadow:0 0 22px 4px rgba(45,212,191,.55); opacity:0; }
+  .bracket{ position:absolute; width:24px; height:24px; border:2.5px solid #2DD4BF; opacity:0; }
+
+  /* ── Utility ── */
+  .grain:before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5; z-index:1;
+    background-image:radial-gradient(rgba(11,31,26,.055) 1px, transparent 1px); background-size:22px 22px; }
+  .grain-dark:before{ background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); }
+  canvas.bg3d{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
+  .no-scrollbar::-webkit-scrollbar{ display:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+  :focus-visible{ outline:3px solid var(--kgreen); outline-offset:3px; border-radius:6px; }
+</style>
+</head>
+
+<body>
+
+<!-- ══════════ FIXED CHROME ══════════ -->
+<div id="progress"></div>
+
+<header class="chrome fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-8 py-4 mix-blend-difference">
+  <div class="flex items-center gap-2.5 text-white">
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M16 3l3.4 6.1 6.8 1-4.9 4.9 1.2 6.9L16 18.6 9.5 21.9l1.2-6.9L5.8 10l6.8-1L16 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+      <circle cx="16" cy="25" r="4" stroke="currentColor" stroke-width="1.7"/>
+    </svg>
+    <span class="display font-bold tracking-tight text-[15px]">ScrapUncle</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="langBtn" class="text-white text-[11px] font-semibold tracking-widest uppercase border border-white/40 rounded-full px-3.5 py-1.5 hover:bg-white/10 transition">EN / हिं</button>
+    <button id="presentBtn" class="text-white text-[11px] font-semibold tracking-widest uppercase border border-white/40 rounded-full px-3.5 py-1.5 hover:bg-white/10 transition">▶ Present</button>
+  </div>
+</header>
+
+<nav class="chrome fixed right-4 md:right-7 top-1/2 -translate-y-1/2 z-50 flex flex-col items-end gap-3.5 text-ink" id="dotRail" aria-label="Slide navigation"></nav>
+
+<div class="chrome fixed bottom-5 left-5 md:left-8 z-50 text-[11px] font-semibold tracking-[.2em] num" id="counter">01 / 12</div>
+
+<button id="exitPresent" class="fixed bottom-5 right-5 z-[60] opacity-0 pointer-events-none text-[11px] font-semibold tracking-widest uppercase bg-ink text-cream rounded-full px-4 py-2">Esc — exit</button>
+
+<main id="deck">
+
+<!-- ══════════ 01 · HERO ══════════ -->
+<section class="slide bg-ink text-cream grain grain-dark" data-slide data-label="Hero" data-theme="dark" data-bg="#0B1F1A">
+  <canvas class="bg3d" id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_50%_60%,transparent_10%,#0B1F1A_78%)]"></div>
+  <div class="slide-inner text-center">
+    <div class="tag text-kgreen-lt mb-7" data-anim data-hi="कबाड़ से कीमत तक">Kabaad to value</div>
+    <h1 id="heroTitle" class="display text-[13vw] leading-[.95] md:text-[6.4rem] font-extrabold max-w-5xl mx-auto">
+      Your kabaad is worth more than you think.
+    </h1>
+    <p class="mt-8 text-lg md:text-xl text-cream/65 max-w-2xl mx-auto leading-relaxed" data-anim
+       data-hi="स्क्रैपसेतु घरों को सत्यापित कबाड़ी वालों से जोड़ता है — पारदर्शी दाम, घर से पिकअप, तुरंत भुगतान।">
+      ScrapSetu connects households with verified kabaadi walas — transparent prices, doorstep pickup, instant UPI payment.
+    </p>
+    <div class="mt-11 flex flex-wrap items-center justify-center gap-3" data-anim>
+      <button class="goto bg-kgreen text-white rounded-full px-7 py-3.5 text-sm font-semibold hover:bg-kgreen-lt hover:text-ink transition-all hover:-translate-y-0.5 shadow-lg shadow-kgreen/25" data-target="4">See the price engine</button>
+      <button class="goto border border-cream/25 rounded-full px-7 py-3.5 text-sm font-semibold hover:bg-cream/10 transition" data-target="5">How it works</button>
+    </div>
+    <div class="mt-16 flex flex-col items-center gap-2 text-cream/35 text-[10px] tracking-[.3em] uppercase" data-anim>
+      <span>Scroll</span>
+      <svg id="scrollCue" width="14" height="24" viewBox="0 0 14 24" fill="none"><path d="M7 1v20m0 0l5-5m-5 5l-5-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 02 · PROBLEM ══════════ -->
+<section class="slide bg-[#EDEAE3] grain" data-slide data-label="The problem" data-theme="light" data-bg="#EDEAE3">
+  <div class="slide-inner">
+    <div class="max-w-3xl">
+      <div class="tag text-terra-dk mb-5" data-anim>01 — The problem</div>
+      <h2 class="display text-4xl md:text-6xl font-bold leading-[1.05]" data-split
+          data-hi="भारत का स्क्रैप बाज़ार काम तो करता है — पर अंधेरे में।">
+        India's scrap trade works. It just works in the dark.
+      </h2>
+      <p class="mt-6 text-ink/60 text-lg leading-relaxed max-w-xl" data-anim>
+        India generates over 62 million tonnes of municipal waste a year, and the informal sector recovers the majority of what actually gets recycled. Yet neither side of that trade has price visibility. <span class="text-ink/40 text-sm">(Hover a card for detail.)</span>
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 mt-14" id="problemGrid">
+      <!-- injected -->
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 03 · SOLUTION / TWO PERSONAS ══════════ -->
+<section class="slide bg-cream grain !p-0" data-slide data-label="The solution" data-theme="light" data-bg="#F7F5F0">
+  <div class="slide-inner !max-w-none px-0">
+    <div class="text-center pt-24 pb-10 px-6">
+      <div class="tag text-kgreen mb-5" data-anim>02 — The solution</div>
+      <h2 class="display text-4xl md:text-6xl font-bold" data-split>One app. Two sides. One shared incentive.</h2>
+      <p class="mt-5 text-ink/55 max-w-xl mx-auto" data-anim>Click a side to explore it. Green is the seller. Terracotta is the collector. Remember that — the rest of this deck uses it.</p>
+    </div>
+
+    <div class="relative flex flex-col md:flex-row w-full min-h-[560px]" id="splitWrap">
+      <!-- SELLER -->
+      <div class="split-half relative flex-1 bg-kgreen text-white flex flex-col items-center justify-center gap-8 py-16 px-8 cursor-pointer transition-[flex] duration-700 ease-out" data-side="seller" tabindex="0" role="button" aria-label="Explore the seller side">
+        <div class="text-center">
+          <div class="tag text-white/70 mb-3">For the seller</div>
+          <h3 class="display text-3xl md:text-4xl font-bold">Sell scrap<br>without haggling.</h3>
+          <p class="mt-4 text-white/75 max-w-xs mx-auto text-sm leading-relaxed side-detail opacity-0 h-0 overflow-hidden">
+            Pick your materials, see a locked price band before anyone arrives, choose a slot, and get paid to UPI the second the weighing is done.
+          </p>
+        </div>
+        <div class="phone shrink-0"><div class="phone-screen"><div class="notch"></div>
+          <div class="p-5 pt-9 h-full flex flex-col">
+            <p class="text-[10px] tracking-widest uppercase text-ink/40">Today's rate</p>
+            <p class="display text-2xl font-bold text-ink mt-1">Newspaper ₹14/kg</p>
+            <div class="mt-4 space-y-2.5 flex-1">
+              <div class="flex items-center justify-between rounded-xl bg-kgreen/10 px-3.5 py-3 text-ink"><span class="text-sm font-medium">📰 Paper</span><span class="text-sm font-bold num">6 kg</span></div>
+              <div class="flex items-center justify-between rounded-xl bg-kgreen/10 px-3.5 py-3 text-ink"><span class="text-sm font-medium">🧴 Plastic</span><span class="text-sm font-bold num">3 kg</span></div>
+              <div class="flex items-center justify-between rounded-xl bg-kgreen/10 px-3.5 py-3 text-ink"><span class="text-sm font-medium">🔩 Iron</span><span class="text-sm font-bold num">4 kg</span></div>
+            </div>
+            <div class="rounded-2xl bg-ink text-white p-4">
+              <p class="text-[10px] tracking-widest uppercase text-white/45">Estimated payout</p>
+              <p class="display text-3xl font-extrabold num">₹228</p>
+            </div>
+            <button class="mt-3 w-full rounded-full bg-kgreen text-white py-3 text-sm font-semibold">Book pickup</button>
+          </div>
+        </div></div>
+      </div>
+      <!-- BRIDGE -->
+      <div class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none items-center justify-center">
+        <div class="w-20 h-20 rounded-full bg-cream shadow-2xl flex items-center justify-center">
+          <svg width="42" height="42" viewBox="0 0 48 48" fill="none">
+            <path id="bridgePath" d="M6 32c6-14 30-14 36 0" stroke="#0B1F1A" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M6 32h36M14 32v-6M24 32V21M34 32v-6" stroke="#0B1F1A" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <!-- COLLECTOR -->
+      <div class="split-half relative flex-1 bg-terra text-white flex flex-col items-center justify-center gap-8 py-16 px-8 cursor-pointer transition-[flex] duration-700 ease-out" data-side="collector" tabindex="0" role="button" aria-label="Explore the collector side">
+        <div class="text-center">
+          <div class="tag text-white/70 mb-3">For the kabaadi wala</div>
+          <h3 class="display text-3xl md:text-4xl font-bold">Full cart.<br>Zero empty trips.</h3>
+          <p class="mt-4 text-white/80 max-w-xs mx-auto text-sm leading-relaxed side-detail opacity-0 h-0 overflow-hidden">
+            Accept jobs nearby, follow an optimised route, and earn a fixed commission per pickup plus distance and volume bonuses — settled daily.
+          </p>
+        </div>
+        <div class="phone shrink-0"><div class="phone-screen"><div class="notch"></div>
+          <div class="p-5 pt-9 h-full flex flex-col">
+            <p class="text-[10px] tracking-widest uppercase text-ink/40">Nearby jobs</p>
+            <p class="display text-2xl font-bold text-ink mt-1">4 within 1.2 km</p>
+            <div class="mt-4 space-y-2.5 flex-1">
+              <div class="rounded-xl border border-terra/25 px-3.5 py-3">
+                <p class="text-sm font-semibold text-ink">Sector 12 · 13 kg mixed</p>
+                <p class="text-xs text-ink/50 mt-0.5">450 m · earns <span class="font-bold text-terra num">₹72</span></p>
+              </div>
+              <div class="rounded-xl border border-terra/25 px-3.5 py-3">
+                <p class="text-sm font-semibold text-ink">Green Park · 26 kg paper</p>
+                <p class="text-xs text-ink/50 mt-0.5">900 m · earns <span class="font-bold text-terra num">₹118</span></p>
+              </div>
+            </div>
+            <div class="rounded-2xl bg-ink text-white p-4">
+              <p class="text-[10px] tracking-widest uppercase text-white/45">Earned today</p>
+              <p class="display text-3xl font-extrabold num">₹612</p>
+            </div>
+            <button class="mt-3 w-full rounded-full bg-terra text-white py-3 text-sm font-semibold">Accept route</button>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 04 · SELLER JOURNEY (pinned scrub) ══════════ -->
+<section id="journey" class="relative bg-ink text-cream" data-slide data-label="Seller journey" data-theme="dark" data-bg="#0B1F1A">
+  <div class="h-[100svh] flex items-center overflow-hidden relative grain grain-dark">
+    <div class="slide-inner px-6 md:px-12">
+      <div class="flex flex-col lg:flex-row items-center gap-12">
+        <div class="lg:w-[38%]">
+          <div class="tag text-kgreen-lt mb-5">03 — Seller journey</div>
+          <h2 class="display text-4xl md:text-5xl font-bold leading-tight">Sell in four taps.</h2>
+          <p class="mt-5 text-cream/60 leading-relaxed">No calling around, no guessing the rate, no waiting all afternoon. Scroll — or click a step.</p>
+          <ol class="mt-9 space-y-1" id="journeySteps"></ol>
+        </div>
+        <div class="lg:w-[62%] flex justify-center overflow-hidden w-full">
+          <div class="phone shrink-0 !w-[268px]">
+            <div class="phone-screen !h-[500px]"><div class="notch"></div>
+              <div id="journeyTrack" class="flex h-full" style="width:400%">
+                <!-- 4 screens injected -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 05 · FAIR PRICE ENGINE ══════════ -->
+<section class="slide bg-cream grain" data-slide data-label="Fair price engine" data-theme="light" data-bg="#F7F5F0">
+  <div class="slide-inner">
+    <div class="grid lg:grid-cols-[1fr_1.15fr] gap-14 items-center">
+      <div>
+        <div class="tag text-gold-dk mb-5" data-anim>04 — Fair price engine</div>
+        <h2 class="display text-4xl md:text-6xl font-bold leading-[1.04]" data-split>Don't take our word for it. Calculate it.</h2>
+        <p class="mt-6 text-ink/60 text-lg leading-relaxed" data-anim>
+          Rates are indexed to regional scrap market data and locked the moment you book — so the number you see is the number you're paid. Pick materials, drag the weight.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-2.5" data-anim>
+          <span class="pill">🔒 Price locked at booking</span>
+          <span class="pill">⚖️ Digital weighing</span>
+          <span class="pill">⚡ Instant UPI</span>
+        </div>
+        <p class="mt-6 text-xs text-ink/35">Indicative rates · last updated <span id="rateDate"></span></p>
+      </div>
+
+      <div class="card p-7 md:p-9" id="calc">
+        <p class="text-[11px] font-semibold tracking-[.18em] uppercase text-ink/40">Select materials</p>
+        <div class="flex flex-wrap gap-2.5 mt-3.5" id="chips"></div>
+
+        <div class="mt-8">
+          <div class="flex items-end justify-between">
+            <p class="text-[11px] font-semibold tracking-[.18em] uppercase text-ink/40">Total weight</p>
+            <p class="display text-2xl font-bold num"><span id="wOut">12</span><span class="text-base font-medium text-ink/45"> kg</span></p>
+          </div>
+          <input id="weight" type="range" min="1" max="60" value="12" class="mt-4" aria-label="Total weight in kilograms">
+          <div class="flex justify-between text-[11px] text-ink/35 mt-2 num"><span>1 kg</span><span>60 kg</span></div>
+        </div>
+
+        <div class="mt-9 pt-8 border-t border-ink/10">
+          <p class="text-[11px] font-semibold tracking-[.18em] uppercase text-ink/40">You receive</p>
+          <p class="display text-6xl md:text-7xl font-extrabold num mt-1 text-ink">₹<span id="payout">0</span></p>
+
+          <div class="mt-7 space-y-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1.5"><span class="text-ink/50">Typical street rate</span><span class="num font-semibold text-ink/50">₹<span id="streetVal">0</span></span></div>
+              <div class="h-2.5 rounded-full bg-ink/8 overflow-hidden"><div id="barStreet" class="h-full rounded-full bg-ink/30" style="width:0%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1.5"><span class="font-semibold text-kgreen">ScrapSetu rate</span><span class="num font-bold text-kgreen">₹<span id="setuVal">0</span></span></div>
+              <div class="h-2.5 rounded-full bg-ink/8 overflow-hidden"><div id="barSetu" class="h-full rounded-full bg-gradient-to-r from-kgreen to-kgreen-lt" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <div id="delta" class="mt-6 inline-flex items-center gap-2 rounded-full bg-gold/18 text-gold-dk px-4 py-2 text-sm font-bold num">
+            ↑ ₹<span id="deltaVal">0</span> more in your pocket
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 06 · WORKFLOW (pinned MotionPath) ══════════ -->
+<section id="workflow" class="relative bg-ink text-cream" data-slide data-label="Full workflow" data-theme="dark" data-bg="#0B1F1A">
+  <div class="h-[100svh] flex items-center overflow-hidden relative grain grain-dark">
+    <div class="slide-inner px-6 md:px-12 w-full">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div>
+          <div class="tag text-kgreen-lt mb-4">05 — End to end</div>
+          <h2 class="display text-4xl md:text-5xl font-bold">From your doorstep to the recycler.</h2>
+        </div>
+        <p class="text-cream/50 text-sm max-w-xs">Scroll to move the cart. Click any stop to inspect it.</p>
+      </div>
+
+      <div class="mt-10 relative">
+        <svg viewBox="0 0 1200 380" class="w-full" id="wfSvg" aria-label="Workflow diagram">
+          <defs>
+            <linearGradient id="pathGrad" x1="0" x2="1">
+              <stop offset="0%" stop-color="#34D399"/><stop offset="55%" stop-color="#F5B32E"/><stop offset="100%" stop-color="#E2703A"/>
+            </linearGradient>
+          </defs>
+          <path id="wfPath" class="dash" d="M 70,290 C 170,290 170,130 270,130 C 370,130 370,290 470,290 C 570,290 570,130 670,130 C 770,130 770,290 870,290 C 970,290 970,150 1130,150"
+                fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.5"/>
+          <path id="wfPathLit" d="M 70,290 C 170,290 170,130 270,130 C 370,130 370,290 470,290 C 570,290 570,130 670,130 C 770,130 770,290 870,290 C 970,290 970,150 1130,150"
+                fill="none" stroke="url(#pathGrad)" stroke-width="3.5" stroke-linecap="round"/>
+          <g id="wfNodes"></g>
+          <g id="cart">
+            <circle r="21" fill="#F5B32E"/>
+            <text y="7" text-anchor="middle" font-size="20">🛺</text>
+          </g>
+        </svg>
+
+        <div id="wfPanel" class="card-dark mt-6 p-6 md:p-7 min-h-[132px]">
+          <p class="tag text-gold" id="wfStepTag">Stop 01</p>
+          <h3 class="display text-2xl font-bold mt-2" id="wfTitle">Request</h3>
+          <p class="text-cream/60 mt-2 max-w-2xl leading-relaxed text-sm md:text-base" id="wfBody">The seller lists materials and picks a 2-hour slot. Price band is locked immediately.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 07 · COLLECTOR EARNINGS ══════════ -->
+<section class="slide bg-[#FFF6F1] grain" data-slide data-label="Collector earnings" data-theme="light" data-bg="#FFF6F1">
+  <div class="slide-inner">
+    <div class="tag text-terra-dk mb-5" data-anim>06 — How kabaadi walas earn</div>
+    <h2 class="display text-4xl md:text-6xl font-bold max-w-3xl leading-[1.04]" data-split>Commission on every pickup. Plus the trips they no longer waste.</h2>
+
+    <div class="grid lg:grid-cols-3 gap-5 mt-14">
+      <!-- Earnings breakdown -->
+      <div class="card p-7">
+        <p class="tag text-ink/40">Per pickup</p>
+        <div class="mt-6 space-y-3" id="earnStack">
+          <div class="earn-row" data-amt="35"><div class="flex justify-between text-sm mb-1.5"><span class="font-medium">Base commission</span><span class="num font-bold">₹35</span></div><div class="h-9 rounded-lg bg-terra/85 origin-left" data-bar style="width:50%"></div></div>
+          <div class="earn-row" data-amt="15"><div class="flex justify-between text-sm mb-1.5"><span class="font-medium">Distance bonus</span><span class="num font-bold">₹15</span></div><div class="h-9 rounded-lg bg-terra/55 origin-left" data-bar style="width:22%"></div></div>
+          <div class="earn-row" data-amt="20"><div class="flex justify-between text-sm mb-1.5"><span class="font-medium">Volume incentive</span><span class="num font-bold">₹20</span></div><div class="h-9 rounded-lg bg-gold origin-left" data-bar style="width:28%"></div></div>
+        </div>
+        <div class="mt-6 pt-5 border-t border-ink/10 flex justify-between items-end">
+          <span class="text-sm font-semibold">Average total</span>
+          <span class="display text-3xl font-extrabold num text-terra">₹70</span>
+        </div>
+      </div>
+
+      <!-- Route optimisation -->
+      <div class="card p-7 flex flex-col">
+        <p class="tag text-ink/40">Route optimisation</p>
+        <p class="text-sm text-ink/55 mt-2.5 leading-relaxed">The single biggest cost for a kabaadi wala is distance travelled with an empty cart. Clustering jobs cuts it sharply.</p>
+        <svg viewBox="0 0 300 200" class="w-full mt-4 flex-1" id="routeSvg" aria-hidden="true">
+          <g id="routeStops"></g>
+          <path id="routeMessy" fill="none" stroke="#0B1F1A" stroke-opacity=".22" stroke-width="2.5" stroke-dasharray="5 6"
+                d="M40,170 L210,40 L70,90 L250,150 L110,30 L180,175 L40,170"/>
+          <path id="routeClean" fill="none" stroke="#E2703A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
+                d="M40,170 L70,90 L110,30 L210,40 L250,150 L180,175 L40,170"/>
+        </svg>
+        <div class="flex justify-between text-xs mt-2">
+          <span class="text-ink/40 num">Before: 9.4 km</span>
+          <span class="text-terra font-bold num">After: 5.1 km</span>
+        </div>
+      </div>
+
+      <!-- Income simulator -->
+      <div class="card p-7">
+        <p class="tag text-ink/40">Monthly income simulator</p>
+        <div class="mt-6">
+          <div class="flex items-end justify-between">
+            <span class="text-sm text-ink/55">Pickups per day</span>
+            <span class="display text-2xl font-bold num" id="ppdOut">8</span>
+          </div>
+          <input id="ppd" type="range" min="3" max="20" value="8" class="terra mt-4" aria-label="Pickups per day">
+        </div>
+        <div class="mt-8">
+          <p class="text-[11px] font-semibold tracking-[.18em] uppercase text-ink/40">Estimated monthly earnings</p>
+          <p class="display text-5xl font-extrabold num mt-1 text-terra">₹<span id="monthly">0</span></p>
+          <p class="text-xs text-ink/40 mt-3 leading-relaxed">Based on 26 working days at an average ₹70 per pickup, excluding resale margin on aggregated stock. Illustrative projection, not a guarantee.</p>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-ink/4 p-3.5"><p class="text-[10px] uppercase tracking-wider text-ink/40">Payouts</p><p class="text-sm font-bold mt-0.5">Daily, to UPI</p></div>
+          <div class="rounded-xl bg-ink/4 p-3.5"><p class="text-[10px] uppercase tracking-wider text-ink/40">Joining cost</p><p class="text-sm font-bold mt-0.5">₹0</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 08 · TRUST ══════════ -->
+<section class="slide bg-ink text-cream grain grain-dark" data-slide data-label="Trust & safety" data-theme="dark" data-bg="#0B1F1A">
+  <div class="slide-inner">
+    <div class="text-center max-w-2xl mx-auto">
+      <div class="tag text-kgreen-lt mb-5" data-anim>07 — Trust architecture</div>
+      <h2 class="display text-4xl md:text-6xl font-bold leading-[1.05]" data-split>Both sides need to feel safe. Here's the machinery.</h2>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-14" id="trustGrid"></div>
+  </div>
+</section>
+
+<!-- ══════════ 09 · IMPACT ══════════ -->
+<section class="slide bg-ink text-cream relative" data-slide data-label="Impact" data-theme="dark" data-bg="#071613">
+  <canvas class="bg3d" id="impactCanvas" aria-hidden="true"></canvas>
+  <div class="absolute inset-0 z-[1] bg-[linear-gradient(180deg,#071613_0%,transparent_30%,transparent_70%,#071613_100%)]"></div>
+  <div class="slide-inner text-center">
+    <div class="tag text-gold mb-5" data-anim>08 — Aggregate impact</div>
+    <h2 class="display text-4xl md:text-6xl font-bold" data-split>Small sales. Large consequences.</h2>
+
+    <div class="inline-flex gap-1 mt-9 p-1 rounded-full bg-white/8 border border-white/12" id="impactToggle" role="tablist"></div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12" id="impactGrid"></div>
+    <p class="text-xs text-cream/30 mt-9">Pilot figures and forward projections. Independently audited from launch.</p>
+  </div>
+</section>
+
+<!-- ══════════ 10 · KALAKRITI AI ══════════ -->
+<section class="slide bg-[#0A0A16] text-white relative overflow-hidden" data-slide data-label="Kalakriti AI" data-theme="dark" data-bg="#0A0A16">
+  <div class="absolute -top-40 -right-40 w-[620px] h-[620px] rounded-full bg-violet/18 blur-[130px] z-0" id="auraA"></div>
+  <div class="absolute -bottom-52 -left-40 w-[560px] h-[560px] rounded-full bg-teal/14 blur-[130px] z-0" id="auraB"></div>
+
+  <div class="slide-inner">
+    <div class="text-center max-w-3xl mx-auto">
+      <p id="aiHook" class="display text-xl md:text-2xl text-white/45 font-light italic min-h-[2em]"></p>
+      <div class="inline-flex items-center gap-2.5 mt-6 rounded-full border border-white/15 bg-white/5 px-4 py-2" data-anim>
+        <span class="w-2 h-2 rounded-full aura animate-pulse"></span>
+        <span class="text-[11px] font-semibold tracking-[.22em] uppercase">Coming 2027</span>
+      </div>
+      <h2 class="display text-5xl md:text-7xl font-extrabold mt-5 aura-text hi-font">Kalakriti AI</h2>
+      <p class="mt-5 text-white/60 text-lg leading-relaxed max-w-xl mx-auto">
+        Point your camera at what you were about to sell. If it's worth more as an object than as raw material, Kalakriti shows you what to make — and walks you through it.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-[0.85fr_1.15fr] gap-5 mt-14">
+      <!-- Stage 1: scan -->
+      <div class="rounded-3xl border border-white/12 bg-white/[.035] p-7 backdrop-blur">
+        <p class="tag text-teal">Step 1 — Scan</p>
+        <div id="scanBox" class="relative mt-5 rounded-2xl border-2 border-dashed border-white/18 aspect-square flex flex-col items-center justify-center gap-3 overflow-hidden">
+          <div class="text-7xl transition-transform duration-500" id="scanEmoji">🫙</div>
+          <p class="text-white/40 text-sm">Drop a photo, or pick a sample</p>
+          <div class="scanline" id="scanline"></div>
+          <div class="bracket" style="top:14px;left:14px;border-right:0;border-bottom:0"></div>
+          <div class="bracket" style="top:14px;right:14px;border-left:0;border-bottom:0"></div>
+          <div class="bracket" style="bottom:14px;left:14px;border-right:0;border-top:0"></div>
+          <div class="bracket" style="bottom:14px;right:14px;border-left:0;border-top:0"></div>
+          <div id="detectLabel" class="absolute bottom-4 left-4 right-4 rounded-xl bg-teal/15 border border-teal/40 px-3.5 py-2.5 text-xs font-mono text-teal opacity-0"></div>
+        </div>
+        <div class="flex gap-2.5 mt-5" id="samples"></div>
+      </div>
+
+      <!-- Stage 2 + 3 -->
+      <div class="rounded-3xl border border-white/12 bg-white/[.035] p-7 backdrop-blur relative min-h-[430px]">
+        <p class="tag text-violet">Step 2 — Ideas</p>
+        <div class="grid sm:grid-cols-3 gap-3.5 mt-5" id="ideaCards"></div>
+
+        <div id="guide" class="mt-7 pt-7 border-t border-white/10 opacity-0">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p class="tag text-teal">Step 3 — Guided build</p>
+              <h4 class="display text-2xl font-bold mt-2" id="guideTitle">—</h4>
+            </div>
+            <button id="threeDBtn" class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold hover:bg-white/10 transition">◈ 3D preview</button>
+          </div>
+          <div class="grid md:grid-cols-[1fr_190px] gap-6 mt-5">
+            <ol class="relative pl-7 space-y-3.5" id="guideSteps">
+              <span class="absolute left-[7px] top-2 bottom-2 w-px bg-white/15"></span>
+              <span class="absolute left-[7px] top-2 w-px bg-teal origin-top" id="guideLine" style="height:0"></span>
+            </ol>
+            <div class="rounded-2xl bg-black/40 border border-white/10 relative overflow-hidden h-[190px]">
+              <canvas id="craftCanvas" class="w-full h-full"></canvas>
+              <span class="absolute bottom-2 left-0 right-0 text-center text-[10px] tracking-widest uppercase text-white/30">Turntable preview</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-white/25 mt-9 max-w-2xl mx-auto leading-relaxed">
+      How it would work: a vision model identifies material, condition and quantity; retrieval over a curated craft-project database returns viable builds; a language model adapts instructions to the detected items and the user's stated skill level. Finished pieces can be listed on the ScrapSetu marketplace.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 11 · ROADMAP (horizontal scrub) ══════════ -->
+<section id="roadmap" class="relative bg-cream" data-slide data-label="Roadmap" data-theme="light" data-bg="#F7F5F0">
+  <div class="h-[100svh] flex flex-col justify-center overflow-hidden relative grain">
+    <div class="slide-inner px-6 md:px-12">
+      <div class="tag text-kgreen mb-4">09 — Roadmap &amp; model</div>
+      <h2 class="display text-4xl md:text-5xl font-bold">How it scales, and how it earns.</h2>
+    </div>
+    <div class="mt-12 overflow-hidden">
+      <div class="flex gap-5 pl-6 md:pl-12" id="roadTrack"></div>
+    </div>
+    <div class="slide-inner px-6 md:px-12 mt-12">
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="card p-6"><p class="tag text-gold-dk">Revenue 01</p><h4 class="display text-lg font-bold mt-2">Transaction fee</h4><p class="text-sm text-ink/55 mt-1.5">A small platform fee per completed pickup, charged to the aggregation margin, never to the household.</p></div>
+        <div class="card p-6"><p class="tag text-gold-dk">Revenue 02</p><h4 class="display text-lg font-bold mt-2">Aggregation spread</h4><p class="text-sm text-ink/55 mt-1.5">Bulk sorted volume sells to recyclers at materially better rates than fragmented informal supply.</p></div>
+        <div class="card p-6"><p class="tag text-gold-dk">Revenue 03</p><h4 class="display text-lg font-bold mt-2">EPR &amp; marketplace</h4><p class="text-sm text-ink/55 mt-1.5">Verified recovery data for brands' EPR obligations, plus a commission on Kalakriti marketplace sales.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 12 · CLOSE ══════════ -->
+<section class="slide bg-ink text-cream relative grain grain-dark" data-slide data-label="Get involved" data-theme="dark" data-bg="#0B1F1A">
+  <div class="slide-inner text-center">
+    <div class="tag text-kgreen-lt mb-6" data-anim>10 — Get involved</div>
+    <h2 class="display text-5xl md:text-7xl font-extrabold leading-[1] max-w-4xl mx-auto" data-split>Let's make the invisible economy visible.</h2>
+    <p class="mt-7 text-cream/60 text-lg max-w-xl mx-auto">Pilot launching in one city with 60 verified collector partners. We're looking for civic partners, recyclers, and early users.</p>
+
+    <form id="waitlist" class="mt-10 flex flex-col sm:flex-row gap-3 max-w-md mx-auto" novalidate>
+      <input type="email" required placeholder="you@email.com" aria-label="Email address"
+             class="flex-1 rounded-full bg-white/8 border border-white/15 px-5 py-3.5 text-sm outline-none focus:border-kgreen placeholder:text-cream/30" />
+      <button class="rounded-full bg-kgreen px-7 py-3.5 text-sm font-semibold hover:bg-kgreen-lt hover:text-ink transition whitespace-nowrap">Join waitlist</button>
+    </form>
+    <p id="wlMsg" class="mt-4 text-sm text-kgreen-lt opacity-0">Thanks — you're on the list. We'll be in touch.</p>
+
+    <div class="flex flex-wrap justify-center gap-3 mt-12" data-anim>
+      <button class="goto pill !border-cream/20 hover:bg-cream/10 transition" data-target="0">↑ Back to start</button>
+      <button onclick="window.print()" class="pill !border-cream/20 hover:bg-cream/10 transition">⤓ Save as PDF</button>
+    </div>
+
+    <p class="mt-20 text-xs text-cream/25 hi-font">ScrapSetu · कबाड़ से कीमत तक · Concept presentation · All the numbers and Names are completely fictional and do not have any relation with real life </p>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════════════════════════════════════════
+     THREE.JS SCENES
+════════════════════════════════════════════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let webglOK = true;
+try { const c=document.createElement('canvas'); webglOK = !!(c.getContext('webgl2')||c.getContext('webgl')); } catch(e){ webglOK=false; }
+window.__webglOK = webglOK;
+
+/* ── Scene 1 · Hero: scattered waste resolving into a sphere ── */
+function heroScene(){
+  const canvas = document.getElementById('heroCanvas');
+  if(!canvas || !webglOK) return;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+  camera.position.z = 15;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(5,8,6); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x34D399, 1.6); rim.position.set(-7,-3,-5); scene.add(rim);
+
+  const group = new THREE.Group(); scene.add(group);
+  const geos = [
+    new THREE.BoxGeometry(1,.28,.75),                 // newspaper stack
+    new THREE.BoxGeometry(.85,.85,.85),               // carton
+    new THREE.CylinderGeometry(.22,.22,.85,14),       // bottle / can
+    new THREE.CylinderGeometry(.3,.3,.16,16),         // lid
+    new THREE.TorusGeometry(.34,.11,8,18),            // wire coil
+    new THREE.IcosahedronGeometry(.42,0)              // misc
+  ];
+  const palette = [0xE8E1D2, 0xD8C39A, 0x7FB2E5, 0xE2703A, 0xB9C2C7, 0xF5B32E, 0x9AA88F, 0xEDEAE3];
+  const N = window.innerWidth < 768 ? 34 : 58;
+  const items = [];
+
+  for(let i=0;i<N;i++){
+    const mat = new THREE.MeshStandardMaterial({
+      color: palette[i%palette.length], roughness:.62, metalness:.22, flatShading:true
+    });
+    const m = new THREE.Mesh(geos[i%geos.length], mat);
+    // Fibonacci sphere target
+    const t = i/N, phi = Math.acos(1-2*t), theta = Math.PI*(1+Math.sqrt(5))*i, R = 5.4;
+    m.userData.target = new THREE.Vector3(
+      R*Math.sin(phi)*Math.cos(theta), R*Math.sin(phi)*Math.sin(theta)*0.78, R*Math.cos(phi)
+    );
+    m.userData.scatter = new THREE.Vector3(
+      (Math.random()-.5)*34, (Math.random()-.5)*24, (Math.random()-.5)*20
+    );
+    m.position.copy(m.userData.scatter);
+    m.rotation.set(Math.random()*6, Math.random()*6, Math.random()*6);
+    m.userData.spin = new THREE.Vector3((Math.random()-.5)*.006,(Math.random()-.5)*.006,(Math.random()-.5)*.006);
+    m.scale.setScalar(.75 + Math.random()*.6);
+    group.add(m); items.push(m);
+  }
+
+  const state = { mix: 0, exit: 0 };
+  if(reduced){ state.mix = 1; }
+  else{
+    gsap.to(state, { mix:1, duration:2.6, ease:'power3.inOut', delay:.35 });
+  }
+  // Scroll pushes them apart again
+  gsap.to(state, {
+    exit: 1, ease:'none',
+    scrollTrigger:{ trigger:'#heroCanvas', start:'top top', end:'bottom top', scrub:1 }
+  });
+
+  const mouse = { x:0, y:0, tx:0, ty:0 };
+  addEventListener('pointermove', e => {
+    mouse.tx = (e.clientX/innerWidth - .5); mouse.ty = (e.clientY/innerHeight - .5);
+  }, { passive:true });
+
+  const tmp = new THREE.Vector3();
+  function resize(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if(canvas.width!==w*renderer.getPixelRatio() || canvas.height!==h*renderer.getPixelRatio()){
+      renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+    }
+  }
+  let visible = true;
+  new IntersectionObserver(([e])=>visible=e.isIntersecting,{threshold:0}).observe(canvas);
+
+  renderer.setAnimationLoop((time)=>{
+    if(!visible) return;
+    resize();
+    mouse.x += (mouse.tx-mouse.x)*.05; mouse.y += (mouse.ty-mouse.y)*.05;
+    const e = state.exit;
+    items.forEach((m,i)=>{
+      tmp.copy(m.userData.scatter).lerp(m.userData.target, state.mix);
+      // drift outward on scroll
+      tmp.multiplyScalar(1 + e*2.2);
+      tmp.y += Math.sin(time*0.0006 + i)*0.22;
+      m.position.lerp(tmp, .12);
+      m.rotation.x += m.userData.spin.x; m.rotation.y += m.userData.spin.y; m.rotation.z += m.userData.spin.z;
+      m.material.opacity = 1; 
+    });
+    group.rotation.y += 0.0013;
+    group.rotation.x = mouse.y*0.28;
+    group.rotation.z = -mouse.x*0.1;
+    camera.position.x = mouse.x*2.4;
+    camera.position.y = -mouse.y*1.6;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  });
+}
+
+/* ── Scene 2 · Impact: particles flowing landfill → recycled ── */
+function impactScene(){
+  const canvas = document.getElementById('impactCanvas');
+  if(!canvas || !webglOK) return;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:false, alpha:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60,1,.1,100); camera.position.z = 22;
+
+  const COUNT = window.innerWidth<768 ? 1400 : 3200;
+  const pos = new Float32Array(COUNT*3), col = new Float32Array(COUNT*3), spd = new Float32Array(COUNT);
+  const cDirty = new THREE.Color('#6B6154'), cClean = new THREE.Color('#34D399'), cGold = new THREE.Color('#F5B32E');
+  for(let i=0;i<COUNT;i++){
+    pos[i*3]   = -22 + Math.random()*44;
+    pos[i*3+1] = (Math.random()-.5)*22;
+    pos[i*3+2] = (Math.random()-.5)*14;
+    spd[i] = .012 + Math.random()*.05;
+    const c = cDirty.clone(); c.toArray(col, i*3);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color', new THREE.BufferAttribute(col,3));
+  const mat = new THREE.PointsMaterial({ size:.13, vertexColors:true, transparent:true, opacity:.85,
+                                         blending:THREE.AdditiveBlending, depthWrite:false });
+  const pts = new THREE.Points(g, mat); scene.add(pts);
+
+  let visible = false;
+  new IntersectionObserver(([e])=>visible=e.isIntersecting,{threshold:0}).observe(canvas);
+  const tmpC = new THREE.Color();
+
+  renderer.setAnimationLoop(()=>{
+    if(!visible) return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    if(canvas.width!==Math.floor(w*renderer.getPixelRatio())){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+    const p = g.attributes.position.array, c = g.attributes.color.array;
+    for(let i=0;i<COUNT;i++){
+      p[i*3] += spd[i]*(reduced?0:1);
+      if(p[i*3] > 22){ p[i*3] = -22; p[i*3+1] = (Math.random()-.5)*22; }
+      const t = Math.min(Math.max((p[i*3]+22)/44,0),1);
+      tmpC.copy(cDirty).lerp(t<.5?cGold:cClean, t<.5 ? t*2 : (t-.5)*2);
+      c[i*3]=tmpC.r; c[i*3+1]=tmpC.g; c[i*3+2]=tmpC.b;
+    }
+    g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
+    pts.rotation.y += .0004;
+    renderer.render(scene,camera);
+  });
+}
+
+/* ── Scene 3 · Kalakriti turntable (bottle → pendant lamp) ── */
+let craftAPI = null;
+function craftScene(){
+  const canvas = document.getElementById('craftCanvas');
+  if(!canvas || !webglOK) return;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45,1,.1,50); camera.position.set(0,.6,6.2);
+
+  scene.add(new THREE.AmbientLight(0xffffff,.6));
+  const d = new THREE.DirectionalLight(0xffffff,1.6); d.position.set(3,5,4); scene.add(d);
+  const glow = new THREE.PointLight(0xF5B32E, 22, 12); glow.position.set(0,-.2,0); scene.add(glow);
+  const rimL = new THREE.PointLight(0x8B5CF6, 14, 14); rimL.position.set(-3,2,-3); scene.add(rimL);
+
+  const obj = new THREE.Group(); scene.add(obj);
+  function build(kind){
+    while(obj.children.length) obj.remove(obj.children[0]);
+    if(kind==='lamp'){
+      const glass = new THREE.Mesh(
+        new THREE.CylinderGeometry(.62,.62,1.9,32,1,true),
+        new THREE.MeshPhysicalMaterial({ color:0x9BD8C8, transparent:true, opacity:.42, roughness:.08,
+                                         metalness:0, transmission:.85, side:THREE.DoubleSide })
+      ); glass.position.y=-.2; obj.add(glass);
+      const neck = new THREE.Mesh(new THREE.ConeGeometry(.62,.75,32,1,true),
+        new THREE.MeshPhysicalMaterial({ color:0x9BD8C8, transparent:true, opacity:.42, transmission:.85, side:THREE.DoubleSide }));
+      neck.position.y=1.12; neck.rotation.x=Math.PI; obj.add(neck);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(.3,20,20),
+        new THREE.MeshBasicMaterial({ color:0xFFD98A })); bulb.position.y=-.25; obj.add(bulb);
+      const cord = new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,2.4,8),
+        new THREE.MeshStandardMaterial({ color:0x2A2A2A })); cord.position.y=2.5; obj.add(cord);
+      glow.color.set(0xF5B32E);
+    } else if(kind==='planter'){
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.75,.6,1.5,28),
+        new THREE.MeshStandardMaterial({ color:0xD9C7A8, roughness:.9 })); pot.position.y=-.5; obj.add(pot);
+      for(let i=0;i<9;i++){
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(.3,10,10),
+          new THREE.MeshStandardMaterial({ color:i%2?0x2F855A:0x38A169, roughness:.75 }));
+        const a=i/9*Math.PI*2;
+        leaf.position.set(Math.cos(a)*.55, .5+Math.sin(i*1.7)*.35, Math.sin(a)*.55);
+        leaf.scale.set(1,.6,1); obj.add(leaf);
+      }
+      glow.color.set(0x34D399);
+    } else {
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(.55,.72,1.9,10),
+        new THREE.MeshStandardMaterial({ color:0xE2703A, roughness:.55, flatShading:true })); obj.add(body);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(.63,.07,8,24),
+        new THREE.MeshStandardMaterial({ color:0xF5B32E, metalness:.6, roughness:.3 }));
+      band.rotation.x=Math.PI/2; band.position.y=.45; obj.add(band);
+      glow.color.set(0xE2703A);
+    }
+    gsap.fromTo(obj.scale,{x:.2,y:.2,z:.2},{x:1,y:1,z:1,duration:.8,ease:'back.out(1.7)'});
+  }
+  build('lamp');
+
+  let visible=false;
+  new IntersectionObserver(([e])=>visible=e.isIntersecting,{threshold:.1}).observe(canvas);
+  renderer.setAnimationLoop(()=>{
+    if(!visible) return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    if(canvas.width!==Math.floor(w*renderer.getPixelRatio())){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+    if(!reduced) obj.rotation.y += .009;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  });
+  craftAPI = { build };
+  window.__craft = craftAPI;
+}
+
+heroScene(); impactScene(); craftScene();
+</script>
+
+<!-- ════════════════════════════════════════════════════════
+     DECK LOGIC · GSAP
+════════════════════════════════════════════════════════ -->
+<script>
+gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ─────────── 0 · CONTENT DATA ─────────── */
+const PROBLEMS = [
+  { icon:'₹', t:"You don't know the fair price",
+    b:'Rates change weekly and are never published. Households negotiate blind and typically leave 20–35% on the table.',
+    s:'Households routinely under-price paper and metals because no public rate reference exists.' },
+  { icon:'⏱', t:"You can't find one when you need one",
+    b:'The cart comes when it comes. There is no way to book a pickup for Saturday morning.',
+    s:'Unscheduled collection is the single most cited reason recyclables end up in mixed household bins.' },
+  { icon:'🛺', t:'Collectors burn hours on empty streets',
+    b:'A kabaadi wala may cover 9–10 km a day with no idea where the material actually is.',
+    s:'Route inefficiency is the dominant cost in informal collection — cutting it directly raises take-home income.' }
+];
+
+const JOURNEY = [
+  { t:'Choose materials', d:'Tap the categories you have. Paper, plastic, metals, e-waste, appliances.' },
+  { t:'Estimate weight',  d:'Rough is fine. The final amount is set by a digital scale at pickup.' },
+  { t:'See locked price', d:'A guaranteed band appears before you commit. No surprises later.' },
+  { t:'Pick your slot',   d:'Two-hour windows, same day or scheduled. A verified collector accepts.' }
+];
+
+const RATES = {
+  newspaper:{ label:'📰 Newspaper', rate:14 },
+  cardboard:{ label:'📦 Cardboard', rate:8  },
+  plastic:  { label:'🧴 PET plastic', rate:12 },
+  iron:     { label:'🔩 Iron',      rate:27 },
+  aluminium:{ label:'🥫 Aluminium', rate:105 },
+  copper:   { label:'🔌 Copper',    rate:580 },
+  ewaste:   { label:'💻 E-waste',   rate:40 }
+};
+
+const WF = [
+  { t:'Request',        b:'The seller lists materials and picks a two-hour slot. The price band is locked the moment they confirm.' },
+  { t:'Match',          b:'The engine assigns the job to the nearest verified collector whose route can absorb it without a detour.' },
+  { t:'Pickup',         b:'The collector arrives inside the window. The seller sees a live location and a verified name and photo.' },
+  { t:'Weigh & verify', b:'A Bluetooth digital scale writes weight straight into the app. Both parties photograph the load. No disputes about the number.' },
+  { t:'Instant pay',    b:'UPI transfer fires on confirmation. The seller is paid before the collector leaves the gate.' },
+  { t:'Aggregation hub',b:'Material is consolidated, sorted by grade, and sold to registered recyclers — with a chain-of-custody record for EPR reporting.' }
+];
+
+const TRUST = [
+  { i:'🪪', t:'KYC-verified collectors', b:'Aadhaar-backed identity, photo badge, and a municipal registration check before a single job is accepted.' },
+  { i:'⚖️', t:'Calibrated digital weighing', b:'Bluetooth scales write directly to the app. Manual overrides are flagged and reviewed.' },
+  { i:'📷', t:'Photo evidence', b:'Both parties capture the load at pickup. Images are timestamped and attached to the transaction.' },
+  { i:'🏦', t:'In-app UPI settlement', b:'No cash disputes. Money moves the instant weight is confirmed, with a receipt for both sides.' },
+  { i:'⭐', t:'Two-way ratings', b:'Sellers rate collectors and collectors rate sellers. Persistent low scores lose platform access.' },
+  { i:'🛡', t:'Dispute resolution', b:'A 48-hour window with human review, backed by weighing logs and photographs.' }
+];
+
+const IMPACT = {
+  month:     { label:'This month',     v:[ 84000, 62, 1180000, 240 ] },
+  year:      { label:'This year',      v:[ 910000, 671, 12400000, 640 ] },
+  projected: { label:'Projected 2027', v:[ 4200000, 3105, 58000000, 2800 ] }
+};
+const IMPACT_META = [
+  { u:'kg',      t:'Diverted from landfill', c:'text-kgreen-lt' },
+  { u:'t CO₂e',  t:'Emissions avoided',      c:'text-teal' },
+  { u:'₹',       t:'Paid to households',     c:'text-gold', prefix:true },
+  { u:'',        t:'Collector partners',     c:'text-terra' }
+];
+
+const CRAFT = {
+  bottle: { emoji:'🫙', detect:'Glass bottle · 750 ml · clear · qty 3',
+    ideas:[
+      { n:'Pendant lamp', d:'Moderate', h:'2 hrs', v:'₹450–700', k:'lamp',
+        steps:['Score and separate the base with a bottle cutter, then wet-sand the rim until smooth.','Fit a rubber grommet and thread a braided cord through the neck.','Wire an E14 lamp holder and secure it inside the neck.','Wrap the neck in jute twine for grip and warmth.','Hang, fit a 4W warm LED, and test on a residual-current outlet.'] },
+      { n:'Macramé planter', d:'Easy', h:'1 hr', v:'₹250–400', k:'planter',
+        steps:['Wash and de-label the bottle, then cut it to two-thirds height.','Cut eight cotton cords, each about 1.2 m long.','Knot a gathering hitch at the top and work down in square knots.','Slip the bottle in, adjust the net, and knot the base.','Add drainage pebbles, then soil and a pothos cutting.'] },
+      { n:'Painted vase set', d:'Easy', h:'45 min', v:'₹300–500', k:'vase',
+        steps:['Degrease the glass with isopropyl alcohol.','Prime with a thin coat of white chalk paint and let it cure.','Apply two colour coats, drying fully between them.','Add a terracotta band with masking tape for a clean edge.','Seal with matte varnish so the finish survives water.'] }
+    ]},
+  can: { emoji:'🥫', detect:'Steel can · 400 g · food-grade · qty 5',
+    ideas:[
+      { n:'Desk organiser', d:'Easy', h:'40 min', v:'₹200–350', k:'vase',
+        steps:['File the cut rim smooth and check for burrs.','Prime the outside with metal primer.','Paint in a two-tone scheme and cure fully.','Glue three cans onto a reclaimed wood base.','Line the interiors with felt to protect pen tips.'] },
+      { n:'Tin lantern', d:'Moderate', h:'1.5 hrs', v:'₹350–550', k:'lamp',
+        steps:['Fill the can with water and freeze it so it holds shape while punching.','Tape a paper pattern to the surface and punch holes with a nail.','Thaw, dry thoroughly, and coat the inside with rust-resistant spray.','Attach a wire handle through two top holes.','Add an LED tealight — never an open flame indoors.'] },
+      { n:'Herb planter row', d:'Easy', h:'50 min', v:'₹280–420', k:'planter',
+        steps:['Punch four drainage holes in the base.','Sand and prime the exterior.','Paint and hand-letter each herb name.','Add pebbles, potting mix, and seedlings.','Mount on a reclaimed plank near a sunny window.'] }
+    ]},
+  tube: { emoji:'🧻', detect:'Cardboard tube · 4 cm dia · kraft · qty 12',
+    ideas:[
+      { n:'Wall art honeycomb', d:'Easy', h:'1.5 hrs', v:'₹400–650', k:'vase',
+        steps:['Flatten each tube slightly and cut into 3 cm rings.','Pinch each ring into a petal shape and let it set.','Paint in a three-colour gradient.','Glue petals into hexagonal clusters.','Mount the clusters on a painted backing board.'] },
+      { n:'Cable organiser set', d:'Easy', h:'25 min', v:'₹150–250', k:'vase',
+        steps:['Cut tubes into 6 cm sleeves.','Wrap each in fabric scrap or washi tape.','Label by device with a paint marker.','Coil each cable and slide it in.','Store upright in a shallow reclaimed tray.'] },
+      { n:'Seed starter pots', d:'Easy', h:'30 min', v:'Home use', k:'planter',
+        steps:['Cut tubes into 8 cm lengths.','Make four cuts at one end and fold them inward to form a base.','Pack tightly in a tray so they support each other.','Fill with seed-starting mix and sow.','Plant the whole pot — the cardboard composts in the soil.'] }
+    ]}
+};
+
+const ROAD = [
+  { p:'Phase 01', y:'Q1 2027', t:'Single-city pilot', b:'60 verified collectors, three wards, one aggregation hub. Prove unit economics and the weighing-trust loop.' },
+  { p:'Phase 02', y:'Q3 2027', t:'Three-city rollout', b:'Regional rate index, collector training programme, and a Hindi-first interface with voice input for low-literacy users.' },
+  { p:'Phase 03', y:'2028', t:'Recycler integrations', b:'Direct API contracts with registered recyclers. Chain-of-custody data becomes a sellable EPR compliance product.' },
+  { p:'Phase 04', y:'2028', t:'B2B bulk waste', b:'Offices, RWAs and small manufacturers onboard with scheduled contracts and monthly reporting.' },
+  { p:'Phase 05', y:'2029', t:'Kalakriti AI + marketplace', b:'Upcycling guidance ships to consumers, with a marketplace where finished pieces are listed and sold.' }
+];
+
+/* ─────────── 1 · BUILD DOM ─────────── */
+// Problems
+document.getElementById('problemGrid').innerHTML = PROBLEMS.map(p=>`
+  <div class="flip h-[290px]" data-anim tabindex="0">
+    <div class="flip-in">
+      <div class="flip-face card h-full p-7 flex flex-col justify-between">
+        <div class="w-12 h-12 rounded-2xl bg-terra/12 flex items-center justify-center text-2xl">${p.icon}</div>
+        <div>
+          <h3 class="display text-xl font-bold leading-snug">${p.t}</h3>
+          <p class="text-sm text-ink/55 mt-2.5 leading-relaxed">${p.b}</p>
+        </div>
+        <span class="text-[10px] tracking-[.2em] uppercase text-ink/30">Hover for detail →</span>
+      </div>
+      <div class="flip-face flip-back card !bg-ink !border-ink h-full p-7 flex items-center">
+        <p class="text-cream/85 leading-relaxed">${p.s}</p>
+      </div>
+    </div>
+  </div>`).join('');
+
+// Journey
+document.getElementById('journeySteps').innerHTML = JOURNEY.map((s,i)=>`
+  <li><button class="jstep w-full text-left flex gap-4 rounded-2xl px-4 py-3.5 transition-colors" data-i="${i}">
+    <span class="jnum shrink-0 w-8 h-8 rounded-full border border-cream/25 grid place-items-center text-xs font-bold num transition-all">${i+1}</span>
+    <span><span class="block font-semibold">${s.t}</span><span class="jdesc block text-sm text-cream/45 mt-0.5">${s.d}</span></span>
+  </button></li>`).join('');
+
+document.getElementById('journeyTrack').innerHTML = [
+  `<div class="w-1/4 shrink-0 p-5 pt-10">
+     <p class="text-[10px] tracking-widest uppercase text-ink/40">Step 1</p>
+     <p class="display text-xl font-bold text-ink mt-1">What are you selling?</p>
+     <div class="grid grid-cols-2 gap-2.5 mt-5">
+       ${['📰 Paper','📦 Card','🧴 Plastic','🔩 Iron','🥫 Metal','💻 E-waste'].map((x,i)=>
+         `<div class="rounded-xl border ${i<3?'border-kgreen bg-kgreen/10':'border-ink/12'} px-3 py-4 text-xs font-medium text-ink text-center">${x}</div>`).join('')}
+     </div></div>`,
+  `<div class="w-1/4 shrink-0 p-5 pt-10">
+     <p class="text-[10px] tracking-widest uppercase text-ink/40">Step 2</p>
+     <p class="display text-xl font-bold text-ink mt-1">Roughly how much?</p>
+     <p class="display text-6xl font-extrabold text-kgreen num mt-10 text-center">13<span class="text-2xl text-ink/40"> kg</span></p>
+     <div class="h-2 rounded-full bg-ink/10 mt-6 overflow-hidden"><div class="h-full w-[42%] bg-kgreen rounded-full"></div></div>
+     <p class="text-xs text-ink/40 text-center mt-4">Final weight is set by a digital scale at pickup.</p></div>`,
+  `<div class="w-1/4 shrink-0 p-5 pt-10">
+     <p class="text-[10px] tracking-widest uppercase text-ink/40">Step 3</p>
+     <p class="display text-xl font-bold text-ink mt-1">Your locked price</p>
+     <div class="rounded-2xl bg-ink text-white p-5 mt-6 text-center">
+       <p class="text-[10px] tracking-widest uppercase text-white/45">Guaranteed band</p>
+       <p class="display text-4xl font-extrabold num mt-1">₹236–252</p>
+     </div>
+     <div class="mt-5 space-y-2 text-xs text-ink/55">
+       <p class="flex justify-between"><span>Street rate estimate</span><span class="num font-semibold">₹174</span></p>
+       <p class="flex justify-between text-kgreen font-bold"><span>You gain</span><span class="num">+₹68</span></p>
+     </div></div>`,
+  `<div class="w-1/4 shrink-0 p-5 pt-10">
+     <p class="text-[10px] tracking-widest uppercase text-ink/40">Step 4</p>
+     <p class="display text-xl font-bold text-ink mt-1">Pick a slot</p>
+     <div class="space-y-2.5 mt-5">
+       ${['Today · 4–6 pm','Tomorrow · 10–12 am','Sat · 8–10 am'].map((x,i)=>
+         `<div class="rounded-xl border ${i===0?'border-kgreen bg-kgreen/10':'border-ink/12'} px-4 py-3.5 text-sm font-medium text-ink flex justify-between">
+            <span>${x}</span>${i===0?'<span class="text-kgreen">✓</span>':''}</div>`).join('')}
+     </div>
+     <div class="rounded-2xl bg-kgreen text-white p-4 mt-6 text-center">
+       <p class="text-xs opacity-80">Ravi K. · ⭐ 4.9 · 340 m away</p>
+       <p class="font-bold text-sm mt-1">Pickup confirmed</p>
+     </div></div>`
+].join('');
+
+// Chips
+const chipWrap = document.getElementById('chips');
+chipWrap.innerHTML = Object.entries(RATES).map(([k,v],i)=>
+  `<button class="chip ${i<3?'on':''}" data-k="${k}" aria-pressed="${i<3}">${v.label} <span class="opacity-55 num text-xs">₹${v.rate}</span></button>`).join('');
+
+// Workflow nodes
+const NODE_PTS = [[70,290],[270,130],[470,290],[670,130],[870,290],[1130,150]];
+document.getElementById('wfNodes').innerHTML = NODE_PTS.map((p,i)=>`
+  <g class="wf-node" data-i="${i}" transform="translate(${p[0]},${p[1]})" tabindex="0" role="button" aria-label="${WF[i].t}">
+    <circle class="ring" r="19" fill="#0B1F1A" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+    <text y="5" text-anchor="middle" fill="#F7F5F0" font-size="13" font-weight="700" font-family="Sora">${i+1}</text>
+    <text y="${p[1]>200?46:-32}" text-anchor="middle" fill="rgba(247,245,240,.65)" font-size="13" font-family="Inter">${WF[i].t}</text>
+  </g>`).join('');
+
+// Route stops
+document.getElementById('routeStops').innerHTML =
+  [[40,170],[70,90],[110,30],[210,40],[250,150],[180,175]]
+  .map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#0B1F1A" opacity=".45"/>`).join('');
+
+// Trust
+document.getElementById('trustGrid').innerHTML = TRUST.map(t=>`
+  <div class="hex card-dark p-7" data-anim>
+    <div class="w-12 h-12 rounded-2xl bg-kgreen/18 grid place-items-center text-xl">${t.i}</div>
+    <h3 class="display text-lg font-bold mt-5">${t.t}</h3>
+    <p class="text-sm text-cream/55 mt-2 leading-relaxed">${t.b}</p>
+  </div>`).join('');
+
+// Impact
+document.getElementById('impactToggle').innerHTML = Object.entries(IMPACT).map(([k,v],i)=>
+  `<button class="imp-tab rounded-full px-5 py-2 text-xs font-semibold transition-all ${i===0?'bg-cream text-ink':'text-cream/55 hover:text-cream'}" data-k="${k}" role="tab">${v.label}</button>`).join('');
+document.getElementById('impactGrid').innerHTML = IMPACT_META.map((m,i)=>`
+  <div class="card-dark p-6 md:p-7 text-left" data-anim>
+    <p class="display text-3xl md:text-5xl font-extrabold num ${m.c}">
+      ${m.prefix?'₹':''}<span class="imp-num" data-i="${i}">0</span><span class="text-lg md:text-xl font-semibold opacity-60">${m.prefix?'':' '+m.u}</span>
+    </p>
+    <p class="text-cream/50 text-sm mt-2.5">${m.t}</p>
+  </div>`).join('');
+
+// Kalakriti samples
+document.getElementById('samples').innerHTML = Object.entries(CRAFT).map(([k,v],i)=>
+  `<button class="sample flex-1 rounded-xl border ${i===0?'border-teal bg-teal/10':'border-white/15'} py-3 text-2xl hover:border-teal transition" data-k="${k}">${v.emoji}</button>`).join('');
+
+// Roadmap
+document.getElementById('roadTrack').innerHTML = ROAD.map(r=>`
+  <div class="card shrink-0 w-[78vw] md:w-[400px] p-7">
+    <div class="flex items-center gap-3">
+      <span class="tag text-kgreen">${r.p}</span><span class="text-xs text-ink/35 num">${r.y}</span>
+    </div>
+    <h3 class="display text-2xl font-bold mt-3">${r.t}</h3>
+    <p class="text-sm text-ink/55 mt-2.5 leading-relaxed">${r.b}</p>
+  </div>`).join('');
+
+/* ─────────── 2 · SMOOTH SCROLL ─────────── */
+/* ─────────── 2 · NATIVE SCROLL ─────────── */
+ScrollTrigger.config({ ignoreMobileResize:true });   // stops URL-bar resize jitter
+
+const scrollToY = y => window.scrollTo({ top:Math.max(0,y), behavior:REDUCED?'auto':'smooth' });
+const scrollToEl = el => scrollToY(el.getBoundingClientRect().top + window.scrollY);
+
+
+/* ─────────── 3 · CHROME + NAVIGATION ─────────── */
+const slides = gsap.utils.toArray('[data-slide]');
+const rail = document.getElementById('dotRail');
+rail.innerHTML = slides.map((s,i)=>
+  `<button class="dot-btn flex items-center gap-2.5 group" data-i="${i}" aria-label="Go to ${s.dataset.label}">
+     <span class="dot-label text-[11px] font-semibold">${s.dataset.label}</span>
+     <span class="dot"></span>
+   </button>`).join('');
+const dotBtns = [...rail.querySelectorAll('.dot-btn')];
+const counter = document.getElementById('counter');
+let active = 0;
+
+function setActive(i){
+  if(i===active) return;
+  active = i;
+  dotBtns.forEach((b,n)=>b.classList.toggle('active', n===i));
+  counter.textContent = String(i+1).padStart(2,'0') + ' / ' + String(slides.length).padStart(2,'0');
+  const dark = slides[i].dataset.theme === 'dark';
+  rail.style.color = dark ? '#F7F5F0' : '#0B1F1A';
+  counter.style.color = dark ? '#F7F5F0' : '#0B1F1A';
+}
+setActive(0); dotBtns[0].classList.add('active');
+dotBtns.forEach(b=>b.onclick=()=>scrollToEl(slides[+b.dataset.i]));
+document.querySelectorAll('.goto').forEach(b=>b.onclick=()=>scrollToEl(slides[+b.dataset.target]));
+
+slides.forEach((s,i)=>{
+  ScrollTrigger.create({ trigger:s, start:'top 55%', end:'bottom 45%',
+    onToggle:({isActive})=>isActive && setActive(i) });
+  // background colour journey
+  ScrollTrigger.create({ trigger:s, start:'top 60%', end:'bottom 40%',
+    onToggle:({isActive})=>isActive && gsap.to(document.body,{ backgroundColor:s.dataset.bg, duration:.7, ease:'power2.out' }) });
+});
+
+// progress bar
+gsap.to('#progress', { scaleX:1, ease:'none',
+  scrollTrigger:{ trigger:document.body, start:'top top', end:'bottom bottom', scrub:.3 } });
+
+// keyboard
+addEventListener('keydown', e=>{
+  if(['ArrowDown','PageDown'].includes(e.key) || (e.key===' ' && e.target===document.body)){
+    e.preventDefault(); scrollToEl(slides[Math.min(active+1, slides.length-1)]);
+  }
+  if(['ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); scrollToEl(slides[Math.max(active-1,0)]); }
+  if(e.key==='Escape') stopPresent();
+  if(/^[1-9]$/.test(e.key)) scrollToEl(slides[Math.min(+e.key-1, slides.length-1)]);
+});
+
+// present mode
+let presentTimer = null;
+function startPresent(){
+  document.body.classList.add('presenting');
+  presentTimer = setInterval(()=>{
+    const next = active+1;
+    if(next >= slides.length){ stopPresent(); return; }
+    scrollToEl(slides[next]);
+  }, 12000);
+}
+function stopPresent(){ document.body.classList.remove('presenting'); clearInterval(presentTimer); presentTimer=null; }
+document.getElementById('presentBtn').onclick = ()=> presentTimer ? stopPresent() : startPresent();
+document.getElementById('exitPresent').onclick = stopPresent;
+
+/* ─────────── 4 · TEXT REVEALS ─────────── */
+function splitChars(el){
+  const words = el.textContent.trim().split(/\s+/);
+  el.innerHTML = words.map(w =>
+    `<span class="inline-block overflow-hidden align-bottom"><span class="char inline-block">${
+      [...w].map(c=>c).join('')}</span></span>`).join(' ');
+  return [...el.querySelectorAll('.char')];
+}
+document.querySelectorAll('[data-split]').forEach(el=>{
+  const chars = splitChars(el);
+  if(REDUCED) return;
+  gsap.from(chars, { yPercent:118, duration:.95, ease:'power4.out', stagger:.028,
+    scrollTrigger:{ trigger:el, start:'top 82%' } });
+});
+
+// hero headline: per-character
+(function(){
+  const el = document.getElementById('heroTitle');
+  const words = el.textContent.trim().split(/\s+/);
+  el.innerHTML = words.map(w=>`<span class="inline-block overflow-hidden align-bottom">${
+    [...w].map(c=>`<span class="char">${c}</span>`).join('')}</span>`).join(' ');
+  if(REDUCED) return;
+  gsap.from(el.querySelectorAll('.char'), { yPercent:120, opacity:0, duration:1.05,
+    ease:'power4.out', stagger:.018, delay:.35 });
+})();
+
+document.querySelectorAll('[data-anim]').forEach(el=>{
+  if(REDUCED) return;
+  gsap.from(el, { y:38, opacity:0, duration:.85, ease:'power3.out',
+    scrollTrigger:{ trigger:el, start:'top 88%' } });
+});
+
+if(!REDUCED) gsap.to('#scrollCue', { y:8, repeat:-1, yoyo:true, duration:1.05, ease:'sine.inOut' });
+
+/* ─────────── 5 · SPLIT PERSONAS ─────────── */
+document.querySelectorAll('.split-half').forEach(half=>{
+  const open = ()=>{
+    document.querySelectorAll('.split-half').forEach(h=>{
+      const isMe = h===half;
+      gsap.to(h, { flexGrow: isMe?1.9:.75, duration:.9, ease:'expo.out' });
+      const det = h.querySelector('.side-detail');
+      gsap.to(det, { opacity:isMe?1:0, height:isMe?'auto':0, duration:.6, ease:'power2.out' });
+      gsap.to(h.querySelector('.phone'), { scale:isMe?1.05:.92, duration:.9, ease:'expo.out' });
+    });
+  };
+  half.addEventListener('click', open);
+  half.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } });
+});
+gsap.from('#bridgePath', { drawSVG:0, duration:1 }); // no-op if plugin absent
+gsap.from('#splitWrap .phone', { y:70, opacity:0, duration:1, stagger:.15, ease:'power3.out',
+  scrollTrigger:{ trigger:'#splitWrap', start:'top 75%' } });
+
+/* ─────────── 6 · SELLER JOURNEY (pinned scrub) ─────────── */
+(function(){
+  const track = document.getElementById('journeyTrack');
+  const steps = [...document.querySelectorAll('.jstep')];
+  function paint(i){
+    steps.forEach((s,n)=>{
+      const on = n===i;
+      s.classList.toggle('bg-white/6', on);
+      const num = s.querySelector('.jnum');
+      num.style.background = on ? '#16A34A' : 'transparent';
+      num.style.borderColor = on ? '#16A34A' : 'rgba(247,245,240,.25)';
+      s.querySelector('.jdesc').style.color = on ? 'rgba(247,245,240,.7)' : 'rgba(247,245,240,.35)';
+    });
+  }
+  paint(0);
+  const tl = gsap.timeline({
+    scrollTrigger:{ trigger:'#journey', start:'top top', end:'+=2600', pin:'#journey > div',
+      scrub:.7, onUpdate:self=>paint(Math.min(3, Math.floor(self.progress*3.99))) }
+  });
+  tl.to(track, { xPercent:-25, duration:1, ease:'none' })
+    .to(track, { xPercent:-50, duration:1, ease:'none' })
+    .to(track, { xPercent:-75, duration:1, ease:'none' });
+  steps.forEach((s,i)=> s.onclick = ()=>{
+    const st = tl.scrollTrigger;
+    const y = st.start + (st.end-st.start) * (i/3.05);
+    lenis ? lenis.scrollTo(y,{duration:1}) : window.scrollTo({top:y, behavior:'smooth'});
+  });
+})();
+
+/* ─────────── 7 · PRICE CALCULATOR ─────────── */
+(function(){
+  const sel = new Set(['newspaper','cardboard','plastic']);
+  const weight = document.getElementById('weight');
+  const out = { payout:0, street:0 };
+  document.getElementById('rateDate').textContent =
+    new Date().toLocaleDateString('en-IN',{ day:'numeric', month:'short', year:'numeric' });
+
+  function calc(){
+    const kg = +weight.value;
+    document.getElementById('wOut').textContent = kg;
+    if(!sel.size){ update(0,0); return; }
+    const avg = [...sel].reduce((a,k)=>a+RATES[k].rate,0) / sel.size;
+    const setu = Math.round(avg*kg);
+    const street = Math.round(setu*0.71);
+    update(setu, street);
+  }
+  function update(setu, street){
+    const max = Math.max(setu,1);
+    gsap.to(out, { payout:setu, street:street, duration:.75, ease:'power2.out',
+      onUpdate(){
+        document.getElementById('payout').textContent = Math.round(out.payout).toLocaleString('en-IN');
+        document.getElementById('setuVal').textContent = Math.round(out.payout).toLocaleString('en-IN');
+        document.getElementById('streetVal').textContent = Math.round(out.street).toLocaleString('en-IN');
+        document.getElementById('deltaVal').textContent = Math.round(out.payout-out.street).toLocaleString('en-IN');
+      }});
+    gsap.to('#barSetu', { width:'100%', duration:.8, ease:'power3.out' });
+    gsap.to('#barStreet', { width:(street/max*100)+'%', duration:.8, ease:'power3.out' });
+    gsap.fromTo('#delta', { scale:.9 }, { scale:1, duration:.55, ease:'back.out(2.4)' });
+  }
+  chipWrap.addEventListener('click', e=>{
+    const b = e.target.closest('.chip'); if(!b) return;
+    const k = b.dataset.k;
+    sel.has(k) ? sel.delete(k) : sel.add(k);
+    b.classList.toggle('on', sel.has(k));
+    b.setAttribute('aria-pressed', sel.has(k));
+    gsap.fromTo(b, { scale:.9 }, { scale:1, duration:.4, ease:'back.out(3)' });
+    calc();
+  });
+  weight.addEventListener('input', calc);
+  ScrollTrigger.create({ trigger:'#calc', start:'top 78%', once:true, onEnter:calc });
+  calc();
+})();
+
+/* ─────────── 8 · WORKFLOW MOTIONPATH ─────────── */
+(function(){
+  const nodes = [...document.querySelectorAll('.wf-node')];
+  const lit = document.getElementById('wfPathLit');
+  const L = lit.getTotalLength();
+  gsap.set(lit, { strokeDasharray:L, strokeDashoffset:L });
+  gsap.set('#cart', { xPercent:-50, yPercent:-50 });
+
+  let current = -1;
+  function show(i){
+    if(i===current) return; current = i;
+    nodes.forEach((n,k)=>{
+      n.classList.toggle('active', k===i);
+      n.querySelector('.ring').setAttribute('fill', k<=i ? '#16A34A' : '#0B1F1A');
+      n.querySelector('.ring').setAttribute('stroke', k===i ? '#F5B32E' : 'rgba(255,255,255,.3)');
+    });
+    const panel = document.getElementById('wfPanel');
+    gsap.timeline()
+      .to(['#wfStepTag','#wfTitle','#wfBody'], { y:-10, opacity:0, duration:.22, ease:'power2.in' })
+      .add(()=>{
+        document.getElementById('wfStepTag').textContent = 'Stop ' + String(i+1).padStart(2,'0');
+        document.getElementById('wfTitle').textContent = WF[i].t;
+        document.getElementById('wfBody').textContent  = WF[i].b;
+      })
+      .fromTo(['#wfStepTag','#wfTitle','#wfBody'], { y:12, opacity:0 },
+              { y:0, opacity:1, duration:.5, stagger:.06, ease:'power3.out' });
+    gsap.fromTo(panel, { borderColor:'rgba(245,179,46,.5)' }, { borderColor:'rgba(255,255,255,.11)', duration:1 });
+  }
+
+  const st = gsap.timeline({
+    scrollTrigger:{ trigger:'#workflow', start:'top top', end:'+=3200', pin:'#workflow > div',
+      scrub:.8, onUpdate:self=> show(Math.min(5, Math.floor(self.progress*5.99))) }
+  });
+  st.to('#cart', { motionPath:{ path:'#wfPath', align:'#wfPath', alignOrigin:[.5,.5], autoRotate:false },
+                   ease:'none', duration:1 }, 0)
+    .to(lit, { strokeDashoffset:0, ease:'none', duration:1 }, 0);
+
+  nodes.forEach((n,i)=>{
+    const jump = ()=>{
+      const s = st.scrollTrigger;
+      const y = s.start + (s.end-s.start)*(i/5.05);
+      lenis ? lenis.scrollTo(y,{duration:1}) : window.scrollTo({top:y, behavior:'smooth'});
+    };
+    n.addEventListener('click', jump);
+    n.addEventListener('keydown', e=>{ if(e.key==='Enter'){ jump(); } });
+  });
+  show(0);
+})();
+
+/* ─────────── 9 · COLLECTOR EARNINGS ─────────── */
+(function(){
+  gsap.from('[data-bar]', { scaleX:0, duration:1, stagger:.13, ease:'power3.out',
+    scrollTrigger:{ trigger:'#earnStack', start:'top 82%' } });
+
+  const clean = document.getElementById('routeClean');
+  const cl = clean.getTotalLength();
+  gsap.set(clean, { strokeDasharray:cl, strokeDashoffset:cl });
+  gsap.timeline({ scrollTrigger:{ trigger:'#routeSvg', start:'top 80%' } })
+    .to('#routeMessy', { opacity:.14, duration:.5 })
+    .to(clean, { strokeDashoffset:0, duration:1.6, ease:'power2.inOut' }, '-=.2');
+
+  const ppd = document.getElementById('ppd'), obj = { v:0 };
+  function calcM(){
+    const n = +ppd.value;
+    document.getElementById('ppdOut').textContent = n;
+    gsap.to(obj, { v:n*26*70, duration:.7, ease:'power2.out',
+      onUpdate:()=> document.getElementById('monthly').textContent = Math.round(obj.v).toLocaleString('en-IN') });
+  }
+  ppd.addEventListener('input', calcM);
+  ScrollTrigger.create({ trigger:'#ppd', start:'top 85%', once:true, onEnter:calcM });
+  calcM();
+})();
+
+/* ─────────── 10 · IMPACT COUNTERS ─────────── */
+(function(){
+  const nums = [...document.querySelectorAll('.imp-num')];
+  const store = nums.map(()=>({v:0}));
+  function run(key){
+    IMPACT[key].v.forEach((target,i)=>{
+      gsap.to(store[i], { v:target, duration:1.8, ease:'power3.out',
+        onUpdate:()=> nums[i].textContent = Math.round(store[i].v).toLocaleString('en-IN') });
+    });
+  }
+  ScrollTrigger.create({ trigger:'#impactGrid', start:'top 80%', once:true, onEnter:()=>run('month') });
+  document.getElementById('impactToggle').addEventListener('click', e=>{
+    const b = e.target.closest('.imp-tab'); if(!b) return;
+    document.querySelectorAll('.imp-tab').forEach(t=>{
+      const on = t===b;
+      t.classList.toggle('bg-cream', on); t.classList.toggle('text-ink', on);
+      t.classList.toggle('text-cream/55', !on);
+    });
+    run(b.dataset.k);
+  });
+})();
+
+/* ─────────── 11 · KALAKRITI AI ─────────── */
+(function(){
+  const hook = document.getElementById('aiHook');
+  const HOOK_TEXT = '"But what if some kabaad shouldn\'t be sold at all?"';
+  ScrollTrigger.create({ trigger:hook, start:'top 78%', once:true, onEnter(){
+    if(REDUCED){ hook.textContent = HOOK_TEXT; return; }
+    let i=0;
+    const tick = setInterval(()=>{ hook.textContent = HOOK_TEXT.slice(0,++i); if(i>=HOOK_TEXT.length) clearInterval(tick); }, 32);
+  }});
+
+  if(!REDUCED){
+    gsap.to('#auraA',{ x:70, y:-40, scale:1.15, duration:14, repeat:-1, yoyo:true, ease:'sine.inOut' });
+    gsap.to('#auraB',{ x:-50, y:50, scale:1.1, duration:17, repeat:-1, yoyo:true, ease:'sine.inOut' });
+  }
+
+  let currentKey = 'bottle';
+
+  function scan(key){
+    currentKey = key;
+    const data = CRAFT[key];
+    document.getElementById('scanEmoji').textContent = data.emoji;
+    const label = document.getElementById('detectLabel');
+    gsap.set(label,{ opacity:0 });
+    gsap.set('#ideaCards',{ opacity:0 });
+    gsap.set('#guide',{ opacity:0, y:14 });
+
+    const tl = gsap.timeline();
+    tl.set('#scanline',{ opacity:1, top:'0%' })
+      .to('#scanline',{ top:'100%', duration:.85, ease:'power1.inOut' })
+      .to('#scanline',{ opacity:0, duration:.2 })
+      .fromTo('.bracket',{ opacity:0, scale:.5 },{ opacity:1, scale:1, duration:.4, stagger:.06, ease:'back.out(3)' },'-=.5')
+      .add(()=>{ label.textContent = '▸ ' + data.detect; })
+      .to(label,{ opacity:1, y:0, duration:.4 })
+      .add(()=> renderIdeas(data.ideas))
+      .to('#ideaCards',{ opacity:1, duration:.01 })
+      .fromTo('.idea',{ y:40, opacity:0, rotate:(i)=>(i-1)*7 },
+                      { y:0, opacity:1, rotate:0, duration:.75, stagger:.1, ease:'back.out(1.5)' });
+  }
+
+  function renderIdeas(ideas){
+    document.getElementById('ideaCards').innerHTML = ideas.map((x,i)=>`
+      <button class="idea text-left rounded-2xl border border-white/12 bg-white/5 p-4 hover:border-teal hover:bg-teal/8 transition" data-i="${i}">
+        <p class="font-semibold text-sm leading-snug">${x.n}</p>
+        <div class="flex flex-wrap gap-1.5 mt-3">
+          <span class="text-[10px] rounded-full bg-violet/25 text-violet-200 px-2 py-.5 px-2 py-[3px]">${x.d}</span>
+          <span class="text-[10px] rounded-full bg-white/10 px-2 py-[3px]">${x.h}</span>
+        </div>
+        <p class="text-[11px] text-teal mt-2.5 num font-semibold">${x.v}</p>
+      </button>`).join('');
+  }
+
+  function openGuide(idea){
+    document.getElementById('guideTitle').textContent = idea.n;
+    const ol = document.getElementById('guideSteps');
+    ol.querySelectorAll('li').forEach(n=>n.remove());
+    idea.steps.forEach((s,i)=>{
+      const li = document.createElement('li');
+      li.className = 'gstep relative text-sm text-white/65 leading-relaxed';
+      li.innerHTML = `<span class="absolute -left-7 top-1 w-3.5 h-3.5 rounded-full bg-teal/25 border border-teal grid place-items-center text-[8px] font-bold text-teal">${i+1}</span>${s}`;
+      ol.appendChild(li);
+    });
+    if(window.__craft) window.__craft.build(idea.k);
+    gsap.timeline()
+      .to('#guide',{ opacity:1, y:0, duration:.6, ease:'power3.out' })
+      .fromTo('.gstep',{ x:-16, opacity:0 },{ x:0, opacity:1, duration:.5, stagger:.09, ease:'power3.out' },'-=.3')
+      .fromTo('#guideLine',{ height:0 },{ height:'calc(100% - 16px)', duration:1, ease:'power2.out' },'-=.7');
+  }
+
+  document.getElementById('samples').addEventListener('click', e=>{
+    const b = e.target.closest('.sample'); if(!b) return;
+    document.querySelectorAll('.sample').forEach(s=>{
+      s.classList.toggle('border-teal', s===b); s.classList.toggle('bg-teal/10', s===b);
+      s.classList.toggle('border-white/15', s!==b);
+    });
+    scan(b.dataset.k);
+  });
+  document.getElementById('ideaCards').addEventListener('click', e=>{
+    const b = e.target.closest('.idea'); if(!b) return;
+    document.querySelectorAll('.idea').forEach(x=>x.classList.remove('border-teal','bg-teal/10'));
+    b.classList.add('border-teal','bg-teal/10');
+    openGuide(CRAFT[currentKey].ideas[+b.dataset.i]);
+  });
+  document.getElementById('threeDBtn').onclick = ()=>{
+    const c = document.getElementById('craftCanvas');
+    gsap.fromTo(c,{ scale:.85, opacity:.4 },{ scale:1, opacity:1, duration:.7, ease:'back.out(2)' });
+  };
+
+  // drag & drop
+  const box = document.getElementById('scanBox');
+  ['dragenter','dragover'].forEach(ev=>box.addEventListener(ev, e=>{ e.preventDefault(); box.style.borderColor='#2DD4BF'; }));
+  ['dragleave','drop'].forEach(ev=>box.addEventListener(ev, e=>{ e.preventDefault(); box.style.borderColor='rgba(255,255,255,.18)'; }));
+  box.addEventListener('drop', ()=> scan(currentKey));
+
+  ScrollTrigger.create({ trigger:'#scanBox', start:'top 75%', once:true, onEnter:()=>{
+    scan('bottle');
+    setTimeout(()=> openGuide(CRAFT.bottle.ideas[0]), 2600);
+  }});
+})();
+
+/* ─────────── 12 · ROADMAP HORIZONTAL ─────────── */
+(function(){
+  const track = document.getElementById('roadTrack');
+  const dist = () => track.scrollWidth - window.innerWidth + 60;
+  gsap.to(track, { x: () => -dist(), ease:'none',
+    scrollTrigger:{ trigger:'#roadmap', start:'top top', end:()=>'+='+dist(),
+      pin:'#roadmap > div', scrub:.8, invalidateOnRefresh:true } });
+})();
+
+/* ─────────── 13 · WAITLIST ─────────── */
+document.getElementById('waitlist').addEventListener('submit', e=>{
+  e.preventDefault();
+  const input = e.target.querySelector('input');
+  if(!input.value.includes('@')){ gsap.fromTo(input,{x:-8},{x:0,duration:.5,ease:'elastic.out(1,.3)'}); return; }
+  gsap.to('#wlMsg',{ opacity:1, duration:.5 });
+  gsap.to(e.target,{ opacity:.4, duration:.4 });
+  input.value=''; input.disabled=true;
+});
+
+/* ─────────── 14 · LANGUAGE TOGGLE ─────────── */
+document.getElementById('langBtn').addEventListener('click', ()=>{
+  const hi = document.body.classList.toggle('lang-hi');
+  document.querySelectorAll('[data-hi]').forEach(el=>{
+    if(!el.dataset.en) el.dataset.en = el.textContent;
+    el.classList.toggle('hi-font', hi);
+    gsap.to(el,{ opacity:0, duration:.2, onComplete(){
+      el.textContent = hi ? el.dataset.hi : el.dataset.en;
+      gsap.to(el,{ opacity:1, duration:.35 });
+    }});
+  });
+});
+
+/* ─────────── 15 · REFRESH ─────────── */
+addEventListener('load', ()=> ScrollTrigger.refresh());
+let rt; addEventListener('resize', ()=>{ clearTimeout(rt); rt=setTimeout(()=>ScrollTrigger.refresh(), 180); });
+</script>
+</body>
+</html>
